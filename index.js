@@ -86,6 +86,7 @@ class App extends Component {
     validator: 'B62qrHzjcZbYSsrcXVgGko7go1DzSEBfdQGPon5X4LEGExtNJZA4ECj',
     memo: null,
     balance: null,
+    network: null,
   };
   onGetLedgerMinaAddress = async () => {
     try {
@@ -173,6 +174,25 @@ class App extends Component {
     }
   };
 
+  onSetNetwork = async () => {
+    try {
+      this.setState({ error: null });
+      let network;
+      if (this.refs.radioDevnet.checked) {
+        network = Networks.DEVNET;
+      } else if (this.refs.radioMainnet.checked) {
+        network = Networks.MAINNET;
+      } else {
+        throw new Error('Unknown network');
+      }
+      console.log(network);
+      this.setState({ tx: signature.signature, network });
+    } catch (error) {
+      this.setState({ error });
+    }
+  };
+
+
 
   handleChange(type, value) {
     if (type == 'tx') {
@@ -237,7 +257,25 @@ class App extends Component {
         <h1>Mina Ledger Delegator Tool</h1>
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Step 1: Get your address</h5>
+            <h5 class="card-title">Step 1: Choose network</h5>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="flexRadioDefault" id="radioDevnet" ref="radioDevnet" onChange={e => this.onSetNetwork()}/>
+              <label class="form-check-label" for="radioDevnet">
+                DEVNET
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="flexRadioDefault" id="radioMainnet" ref="radioMainnet" onChange={e => this.onSetNetwork()} />
+              <label class="form-check-label" for="radioMainnet">
+                MAINNET
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Step 2: Get your address</h5>
             <label for="addressIndexInput">Address Index</label>
             <input id="addressIndexInput" class="form-control" type="text" ref="addressIndex" value={this.state.addressIndex} onChange={(e) =>this.handleChange('addressIndex', e.target.value)} />
             <button class="btn btn-primary" onClick={this.onGetLedgerMinaAddress}>
@@ -247,7 +285,7 @@ class App extends Component {
         </div>
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Step 2: Get nonce and fee</h5>
+            <h5 class="card-title">Step 3: Get nonce and fee</h5>
             <p>
               This gets the nonce and fee from Mina Explorer. The fee is calculated as min(1, max(fee of txs in last block)).
             </p>
@@ -260,7 +298,7 @@ class App extends Component {
         </div>
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Step 3: Generate delegation transaction</h5>
+            <h5 class="card-title">Step 4: Generate delegation transaction</h5>
             {balance ? (
               <div class="alert alert-primary" role="alert">
                 Balance: {balance.toString()}
@@ -280,7 +318,7 @@ class App extends Component {
         </div>
         <div class="card">
           <div class="card-body">
-            <h5 class="card-title">Step 4: Broadcast transaction</h5>
+            <h5 class="card-title">Step 5: Broadcast transaction</h5>
             <label for="txInput">Transaction</label>
             <input id="txInput" class="form-control" type="text" ref="tx" value={this.state.tx} onChange={(e) =>this.handleChange('tx', e.target.value)} />
             <button  class="btn btn-primary"onClick={this.onBroadcast}>
