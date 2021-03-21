@@ -10989,7 +10989,7 @@ var define;
   }
 })(this);
 
-},{}],"o7RX":[function(require,module,exports) {
+},{}],"ZYwZ":[function(require,module,exports) {
 var Buffer = require("buffer").Buffer;
 (function (module, exports) {
   'use strict';
@@ -16728,7 +16728,7 @@ function toBuffer(v) {
     return v;
 }
 
-},{"bn.js":"o7RX","buffer":"z1tx"}],"j8k2":[function(require,module,exports) {
+},{"bn.js":"ZYwZ","buffer":"z1tx"}],"j8k2":[function(require,module,exports) {
 var Buffer = require("buffer").Buffer;
 "use strict";
 
@@ -26015,6 +26015,18 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -26164,31 +26176,33 @@ var getSignature = /*#__PURE__*/function () {
 }();
 
 var getDelegation = /*#__PURE__*/function () {
-  var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(instance) {
-    var signature;
+  var _ref5 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(instance, index, publicKey, validator, fee, nonce, memo) {
+    var details, signature;
     return regeneratorRuntime.wrap(function _callee5$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
           case 0:
-            _context5.next = 2;
-            return instance.signTransaction({
+            details = {
               txType: _src.TxType.DELEGATION,
-              senderAccount: 0,
-              senderAddress: "delegator",
-              receiverAddress: "delegatee(perhaps carbonara? ;) )",
+              senderAccount: index,
+              senderAddress: publicKey,
+              receiverAddress: validator,
               amount: 0,
-              fee: 1000000000,
-              nonce: 0,
-              memo: "delegate-to-carbonara",
-              networkId: _src.Networks.DEVNET
-            });
+              fee: fee,
+              nonce: nonce,
+              memo: memo,
+              networkId: _src.Networks.MAINNET
+            };
+            console.log(details);
+            _context5.next = 4;
+            return instance.signTransaction(details);
 
-          case 2:
+          case 4:
             signature = _context5.sent;
             console.log(signature);
             return _context5.abrupt("return", signature);
 
-          case 5:
+          case 7:
           case "end":
             return _context5.stop();
         }
@@ -26196,7 +26210,7 @@ var getDelegation = /*#__PURE__*/function () {
     }, _callee5);
   }));
 
-  return function getDelegation(_x6) {
+  return function getDelegation(_x6, _x7, _x8, _x9, _x10, _x11, _x12) {
     return _ref5.apply(this, arguments);
   };
 }();
@@ -26239,7 +26253,14 @@ var App = /*#__PURE__*/function (_Component) {
     _defineProperty(_assertThisInitialized(_this), "state", {
       address: null,
       addressIndex: 0,
-      error: null
+      error: null,
+      message: null,
+      tx: null,
+      fee: null,
+      nonce: null,
+      validator: 'B62qrHzjcZbYSsrcXVgGko7go1DzSEBfdQGPon5X4LEGExtNJZA4ECj',
+      memo: null,
+      balance: null
     });
 
     _defineProperty(_assertThisInitialized(_this), "onGetLedgerMinaAddress", /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee6() {
@@ -26299,7 +26320,7 @@ var App = /*#__PURE__*/function (_Component) {
               publicKey = _yield$getAddress.publicKey;
 
               _this.setState({
-                publicKey: publicKey
+                address: publicKey
               });
 
               _context6.next = 27;
@@ -26321,6 +26342,188 @@ var App = /*#__PURE__*/function (_Component) {
       }, _callee6, null, [[0, 24]]);
     })));
 
+    _defineProperty(_assertThisInitialized(_this), "onGetNonceAndFee", /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee7() {
+      var response, account, blockResponse, block;
+      return regeneratorRuntime.wrap(function _callee7$(_context7) {
+        while (1) {
+          switch (_context7.prev = _context7.next) {
+            case 0:
+              _context7.prev = 0;
+
+              _this.setState({
+                error: null
+              });
+
+              _context7.next = 4;
+              return fetch("https://api.minaexplorer.com/accounts/".concat(_this.state.address));
+
+            case 4:
+              response = _context7.sent;
+              _context7.next = 7;
+              return response.json();
+
+            case 7:
+              account = _context7.sent;
+              _context7.next = 10;
+              return fetch('https://api.minaexplorer.com/blocks?limit=1');
+
+            case 10:
+              blockResponse = _context7.sent;
+              _context7.next = 13;
+              return blockResponse.json();
+
+            case 13:
+              block = _context7.sent;
+
+              _this.setState({
+                nonce: account.account.nonce,
+                fee: Math.min(Math.max.apply(Math, _toConsumableArray(block.blocks[0].transactions.userCommands.map(function (x) {
+                  return x.fee;
+                }))), 1000000000),
+                balance: account.account.balance.total
+              });
+
+              _context7.next = 20;
+              break;
+
+            case 17:
+              _context7.prev = 17;
+              _context7.t0 = _context7["catch"](0);
+
+              _this.setState({
+                error: _context7.t0
+              });
+
+            case 20:
+            case "end":
+              return _context7.stop();
+          }
+        }
+      }, _callee7, null, [[0, 17]]);
+    })));
+
+    _defineProperty(_assertThisInitialized(_this), "onDelegate", /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee8() {
+      var transport, instance, signature;
+      return regeneratorRuntime.wrap(function _callee8$(_context8) {
+        while (1) {
+          switch (_context8.prev = _context8.next) {
+            case 0:
+              _context8.prev = 0;
+
+              _this.setState({
+                error: null
+              });
+
+              if (!window.USB) {
+                _context8.next = 8;
+                break;
+              }
+
+              _context8.next = 5;
+              return _hwTransportWebusb.default.create();
+
+            case 5:
+              transport = _context8.sent;
+              _context8.next = 16;
+              break;
+
+            case 8:
+              if (!window.u2f) {
+                _context8.next = 14;
+                break;
+              }
+
+              _context8.next = 11;
+              return _hwTransportU2f.default.create();
+
+            case 11:
+              transport = _context8.sent;
+              _context8.next = 16;
+              break;
+
+            case 14:
+              _this.setState({
+                error: new Error('Browser not supported. Use Chrome, Firefox, Brave, Opera or Edge.')
+              });
+
+              return _context8.abrupt("return");
+
+            case 16:
+              instance = new _src.MinaLedgerJS(transport);
+              _context8.next = 19;
+              return getDelegation(instance, _this.state.addressIndex, _this.state.address, _this.state.validator, parseInt(_this.state.fee), parseInt(_this.state.nonce), _this.state.memo);
+
+            case 19:
+              signature = _context8.sent;
+
+              _this.setState({
+                tx: signature.signature
+              });
+
+              _context8.next = 26;
+              break;
+
+            case 23:
+              _context8.prev = 23;
+              _context8.t0 = _context8["catch"](0);
+
+              _this.setState({
+                error: _context8.t0
+              });
+
+            case 26:
+            case "end":
+              return _context8.stop();
+          }
+        }
+      }, _callee8, null, [[0, 23]]);
+    })));
+
+    _defineProperty(_assertThisInitialized(_this), "onBroadcast", /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee9() {
+      var settings;
+      return regeneratorRuntime.wrap(function _callee9$(_context9) {
+        while (1) {
+          switch (_context9.prev = _context9.next) {
+            case 0:
+              try {
+                settings = {
+                  method: 'POST',
+                  headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    signature: _this.state.signature,
+                    stake_delegation: {
+                      delegator: _this.state.address,
+                      new_delegate: _this.state.validator,
+                      nonce: _this.state.nonce.toString(),
+                      fee: _this.state.fee.toString(),
+                      memo: _this.state.memo,
+                      valid_until: 4294967295
+                    }
+                  })
+                };
+                console.log(settings);
+                /*
+                const fetchResponse = await fetch(`https://api.minaexplorer.com/broadcast/transaction`, settings);
+                const data = await fetchResponse.json();
+                this.setState({ message: data.message });
+                */
+              } catch (error) {
+                _this.setState({
+                  error: error
+                });
+              }
+
+            case 1:
+            case "end":
+              return _context9.stop();
+          }
+        }
+      }, _callee9);
+    })));
+
     return _this;
   }
 
@@ -26332,8 +26535,52 @@ var App = /*#__PURE__*/function (_Component) {
           tx: value
         });
       } else if (type == 'addressIndex') {
+        this.refs.address.value = '';
+        this.refs.fee.value = '';
+        this.refs.nonce.value = '';
+        this.refs.tx.value = '';
         this.setState({
-          addressIndex: value
+          addressIndex: value,
+          address: null,
+          fee: null,
+          nonce: null,
+          balance: null,
+          tx: null
+        });
+      } else if (type == 'fee') {
+        this.refs.tx.value = '';
+        this.setState({
+          fee: value,
+          tx: null
+        });
+      } else if (type == 'nonce') {
+        this.refs.tx.value = '';
+        this.setState({
+          nonce: value,
+          tx: null
+        });
+      } else if (type == 'address') {
+        this.refs.fee.value = '';
+        this.refs.nonce.value = '';
+        this.refs.tx.value = '';
+        this.setState({
+          address: value,
+          fee: null,
+          nonce: null,
+          balance: null,
+          tx: null
+        });
+      } else if (type == 'validator') {
+        this.refs.tx.value = '';
+        this.setState({
+          validator: value,
+          tx: null
+        });
+      } else if (type == 'memo') {
+        this.refs.tx.value = '';
+        this.setState({
+          memo: value,
+          tx: null
         });
       }
     }
@@ -26344,20 +26591,134 @@ var App = /*#__PURE__*/function (_Component) {
 
       var _this$state = this.state,
           address = _this$state.address,
-          error = _this$state.error;
-      return /*#__PURE__*/_react.default.createElement("div", null, /*#__PURE__*/_react.default.createElement("p", null, /*#__PURE__*/_react.default.createElement("input", {
+          error = _this$state.error,
+          message = _this$state.message,
+          balance = _this$state.balance;
+      return /*#__PURE__*/_react.default.createElement("div", {
+        class: "row"
+      }, /*#__PURE__*/_react.default.createElement("h1", null, "Mina Ledger Delegator Tool"), /*#__PURE__*/_react.default.createElement("div", {
+        class: "card"
+      }, /*#__PURE__*/_react.default.createElement("div", {
+        class: "card-body"
+      }, /*#__PURE__*/_react.default.createElement("h5", {
+        class: "card-title"
+      }, "Step 1: Get your address"), /*#__PURE__*/_react.default.createElement("label", {
+        for: "addressIndexInput"
+      }, "Address Index"), /*#__PURE__*/_react.default.createElement("input", {
+        id: "addressIndexInput",
+        class: "form-control",
         type: "text",
+        ref: "addressIndex",
         value: this.state.addressIndex,
         onChange: function onChange(e) {
           return _this2.handleChange('addressIndex', e.target.value);
         }
       }), /*#__PURE__*/_react.default.createElement("button", {
+        class: "btn btn-primary",
         onClick: this.onGetLedgerMinaAddress
-      }, "Get Ledger Mina Address")), /*#__PURE__*/_react.default.createElement("p", null, error ? /*#__PURE__*/_react.default.createElement("code", {
-        className: "error"
-      }, error.toString()) : /*#__PURE__*/_react.default.createElement("code", {
-        className: "address"
-      }, address)));
+      }, "Get Ledger Mina Address"))), /*#__PURE__*/_react.default.createElement("div", {
+        class: "card"
+      }, /*#__PURE__*/_react.default.createElement("div", {
+        class: "card-body"
+      }, /*#__PURE__*/_react.default.createElement("h5", {
+        class: "card-title"
+      }, "Step 2: Get nonce and fee"), /*#__PURE__*/_react.default.createElement("p", null, "This gets the nonce and fee from Mina Explorer. The fee is calculated as min(1, max(fee of txs in last block))."), /*#__PURE__*/_react.default.createElement("label", {
+        for: "addressInput"
+      }, "Address"), /*#__PURE__*/_react.default.createElement("input", {
+        id: "addressInput",
+        class: "form-control",
+        type: "text",
+        ref: "address",
+        value: this.state.address,
+        onChange: function onChange(e) {
+          return _this2.handleChange('address', e.target.value);
+        }
+      }), /*#__PURE__*/_react.default.createElement("button", {
+        class: "btn btn-primary",
+        onClick: this.onGetNonceAndFee
+      }, "Get nonce and fee from Mina Explorer"))), /*#__PURE__*/_react.default.createElement("div", {
+        class: "card"
+      }, /*#__PURE__*/_react.default.createElement("div", {
+        class: "card-body"
+      }, /*#__PURE__*/_react.default.createElement("h5", {
+        class: "card-title"
+      }, "Step 3: Generate delegation transaction"), balance ? /*#__PURE__*/_react.default.createElement("div", {
+        class: "alert alert-primary",
+        role: "alert"
+      }, "Balance: ", balance.toString()) : null, /*#__PURE__*/_react.default.createElement("label", {
+        for: "feeInput"
+      }, "Fee (in nanomina)"), /*#__PURE__*/_react.default.createElement("input", {
+        id: "feeInput",
+        class: "form-control",
+        type: "text",
+        ref: "fee",
+        value: this.state.fee,
+        onChange: function onChange(e) {
+          return _this2.handleChange('fee', e.target.value);
+        }
+      }), /*#__PURE__*/_react.default.createElement("label", {
+        for: "nonceInput"
+      }, "Nonce"), /*#__PURE__*/_react.default.createElement("input", {
+        id: "nonceInput",
+        class: "form-control",
+        type: "text",
+        ref: "nonce",
+        value: this.state.nonce,
+        onChange: function onChange(e) {
+          return _this2.handleChange('nonce', e.target.value);
+        }
+      }), /*#__PURE__*/_react.default.createElement("label", {
+        for: "validatorInput"
+      }, "Validator Public Key (Default - ZKValidator)"), /*#__PURE__*/_react.default.createElement("input", {
+        id: "validatorInput",
+        class: "form-control",
+        type: "text",
+        ref: "validator",
+        value: this.state.validator,
+        onChange: function onChange(e) {
+          return _this2.handleChange('validator', e.target.value);
+        }
+      }), /*#__PURE__*/_react.default.createElement("label", {
+        for: "memoInput"
+      }, "Memo (recommended - discord username)"), /*#__PURE__*/_react.default.createElement("input", {
+        id: "memoInput",
+        class: "form-control",
+        type: "text",
+        ref: "memo",
+        value: this.state.memo,
+        onChange: function onChange(e) {
+          return _this2.handleChange('memo', e.target.value);
+        }
+      }), /*#__PURE__*/_react.default.createElement("button", {
+        class: "btn btn-primary",
+        onClick: this.onDelegate
+      }, "Generate Delegation Transaction"))), /*#__PURE__*/_react.default.createElement("div", {
+        class: "card"
+      }, /*#__PURE__*/_react.default.createElement("div", {
+        class: "card-body"
+      }, /*#__PURE__*/_react.default.createElement("h5", {
+        class: "card-title"
+      }, "Step 4: Broadcast transaction"), /*#__PURE__*/_react.default.createElement("label", {
+        for: "txInput"
+      }, "Transaction"), /*#__PURE__*/_react.default.createElement("input", {
+        id: "txInput",
+        class: "form-control",
+        type: "text",
+        ref: "tx",
+        value: this.state.tx,
+        onChange: function onChange(e) {
+          return _this2.handleChange('tx', e.target.value);
+        }
+      }), /*#__PURE__*/_react.default.createElement("button", {
+        class: "btn btn-primary",
+        onClick: this.onBroadcast
+      }, "Broadcast Raw Transaction"))), /*#__PURE__*/_react.default.createElement("p", null, error ? /*#__PURE__*/_react.default.createElement("div", {
+        class: "alert alert-danger",
+        role: "alert"
+      }, error.toString()) : null), /*#__PURE__*/_react.default.createElement("p", null, message ? /*#__PURE__*/_react.default.createElement("div", {
+        class: "alert alert-primary",
+        role: "alert"
+      }, message.toString()) : null));
     }
   }]);
 
@@ -26366,4 +26727,4 @@ var App = /*#__PURE__*/function (_Component) {
 
 _reactDom.default.render( /*#__PURE__*/_react.default.createElement(App, null), document.getElementById("root"));
 },{"core-js/modules/es6.array.copy-within.js":"vJRO","core-js/modules/es6.array.fill.js":"fHCf","core-js/modules/es6.array.filter.js":"kLvk","core-js/modules/es6.array.find.js":"HBFq","core-js/modules/es6.array.find-index.js":"xRcq","core-js/modules/es7.array.flat-map.js":"moLY","core-js/modules/es6.array.from.js":"hO05","core-js/modules/es7.array.includes.js":"EHCj","core-js/modules/es6.array.iterator.js":"xsAw","core-js/modules/es6.array.map.js":"P4Vy","core-js/modules/es6.array.of.js":"ARIR","core-js/modules/es6.array.slice.js":"TSa4","core-js/modules/es6.array.sort.js":"xw8W","core-js/modules/es6.array.species.js":"Smp7","core-js/modules/es6.date.to-primitive.js":"jJtq","core-js/modules/es6.function.has-instance.js":"YlR3","core-js/modules/es6.function.name.js":"WtEG","core-js/modules/es6.map.js":"v0j2","core-js/modules/es6.math.acosh.js":"FaF2","core-js/modules/es6.math.asinh.js":"oL1m","core-js/modules/es6.math.atanh.js":"PhwT","core-js/modules/es6.math.cbrt.js":"fi1h","core-js/modules/es6.math.clz32.js":"fJAy","core-js/modules/es6.math.cosh.js":"kseY","core-js/modules/es6.math.expm1.js":"hyI8","core-js/modules/es6.math.fround.js":"N7ZU","core-js/modules/es6.math.hypot.js":"HGHV","core-js/modules/es6.math.imul.js":"Pasv","core-js/modules/es6.math.log1p.js":"RR3i","core-js/modules/es6.math.log10.js":"zlsv","core-js/modules/es6.math.log2.js":"b6PB","core-js/modules/es6.math.sign.js":"BHWJ","core-js/modules/es6.math.sinh.js":"f0FZ","core-js/modules/es6.math.tanh.js":"GaA9","core-js/modules/es6.math.trunc.js":"qy71","core-js/modules/es6.number.constructor.js":"uYep","core-js/modules/es6.number.epsilon.js":"Decw","core-js/modules/es6.number.is-finite.js":"oWwC","core-js/modules/es6.number.is-integer.js":"N7Jd","core-js/modules/es6.number.is-nan.js":"RsrB","core-js/modules/es6.number.is-safe-integer.js":"fbTZ","core-js/modules/es6.number.max-safe-integer.js":"JxHc","core-js/modules/es6.number.min-safe-integer.js":"X6hw","core-js/modules/es6.number.parse-float.js":"IKam","core-js/modules/es6.number.parse-int.js":"QjIW","core-js/modules/es6.object.assign.js":"fRec","core-js/modules/es7.object.define-getter.js":"mNK1","core-js/modules/es7.object.define-setter.js":"DPSG","core-js/modules/es7.object.entries.js":"beat","core-js/modules/es6.object.freeze.js":"QMvv","core-js/modules/es6.object.get-own-property-descriptor.js":"eObd","core-js/modules/es7.object.get-own-property-descriptors.js":"MZQr","core-js/modules/es6.object.get-own-property-names.js":"NX5N","core-js/modules/es6.object.get-prototype-of.js":"x4A6","core-js/modules/es7.object.lookup-getter.js":"Y0di","core-js/modules/es7.object.lookup-setter.js":"biAK","core-js/modules/es6.object.prevent-extensions.js":"vJzf","core-js/modules/es6.object.to-string.js":"tSZj","core-js/modules/es6.object.is.js":"GEUt","core-js/modules/es6.object.is-frozen.js":"UcEb","core-js/modules/es6.object.is-sealed.js":"VI7w","core-js/modules/es6.object.is-extensible.js":"CvEg","core-js/modules/es6.object.keys.js":"oiqN","core-js/modules/es6.object.seal.js":"y8Nt","core-js/modules/es7.object.values.js":"cZE6","core-js/modules/es6.promise.js":"ar2B","core-js/modules/es7.promise.finally.js":"PerR","core-js/modules/es6.reflect.apply.js":"XlBZ","core-js/modules/es6.reflect.construct.js":"JeCu","core-js/modules/es6.reflect.define-property.js":"VZPr","core-js/modules/es6.reflect.delete-property.js":"kfrU","core-js/modules/es6.reflect.get.js":"iEI9","core-js/modules/es6.reflect.get-own-property-descriptor.js":"eHzb","core-js/modules/es6.reflect.get-prototype-of.js":"wht9","core-js/modules/es6.reflect.has.js":"sj65","core-js/modules/es6.reflect.is-extensible.js":"Nj86","core-js/modules/es6.reflect.own-keys.js":"wyLA","core-js/modules/es6.reflect.prevent-extensions.js":"y3HT","core-js/modules/es6.reflect.set.js":"ndfm","core-js/modules/es6.reflect.set-prototype-of.js":"olbq","core-js/modules/es6.regexp.constructor.js":"hBwo","core-js/modules/es6.regexp.flags.js":"SALB","core-js/modules/es6.regexp.match.js":"yikX","core-js/modules/es6.regexp.replace.js":"eUHu","core-js/modules/es6.regexp.split.js":"V8KN","core-js/modules/es6.regexp.search.js":"iHvG","core-js/modules/es6.regexp.to-string.js":"yEH7","core-js/modules/es6.set.js":"igWm","core-js/modules/es6.symbol.js":"s5uV","core-js/modules/es7.symbol.async-iterator.js":"Iboh","core-js/modules/es6.string.anchor.js":"Qidu","core-js/modules/es6.string.big.js":"zi4A","core-js/modules/es6.string.blink.js":"tDaT","core-js/modules/es6.string.bold.js":"VlCA","core-js/modules/es6.string.code-point-at.js":"P7ku","core-js/modules/es6.string.ends-with.js":"MUpt","core-js/modules/es6.string.fixed.js":"BahM","core-js/modules/es6.string.fontcolor.js":"f6mn","core-js/modules/es6.string.fontsize.js":"Du0n","core-js/modules/es6.string.from-code-point.js":"i8rB","core-js/modules/es6.string.includes.js":"IvzQ","core-js/modules/es6.string.italics.js":"EmZX","core-js/modules/es6.string.iterator.js":"Wu89","core-js/modules/es6.string.link.js":"mlNr","core-js/modules/es7.string.pad-start.js":"fWC9","core-js/modules/es7.string.pad-end.js":"XG7E","core-js/modules/es6.string.raw.js":"DtRm","core-js/modules/es6.string.repeat.js":"s8Pp","core-js/modules/es6.string.small.js":"QeD6","core-js/modules/es6.string.starts-with.js":"hSvU","core-js/modules/es6.string.strike.js":"ny4U","core-js/modules/es6.string.sub.js":"Pvqx","core-js/modules/es6.string.sup.js":"mRpz","core-js/modules/es7.string.trim-left.js":"yPLu","core-js/modules/es7.string.trim-right.js":"n2or","core-js/modules/es6.typed.array-buffer.js":"tZr0","core-js/modules/es6.typed.int8-array.js":"W7MG","core-js/modules/es6.typed.uint8-array.js":"n9td","core-js/modules/es6.typed.uint8-clamped-array.js":"m71d","core-js/modules/es6.typed.int16-array.js":"YGkr","core-js/modules/es6.typed.uint16-array.js":"OaOh","core-js/modules/es6.typed.int32-array.js":"sUYQ","core-js/modules/es6.typed.uint32-array.js":"XuMj","core-js/modules/es6.typed.float32-array.js":"V93U","core-js/modules/es6.typed.float64-array.js":"KMMD","core-js/modules/es6.weak-map.js":"yBwO","core-js/modules/es6.weak-set.js":"YtBU","core-js/modules/web.timers.js":"FL4b","core-js/modules/web.immediate.js":"hg3C","core-js/modules/web.dom.iterable.js":"hFdU","regenerator-runtime/runtime.js":"KA2S","./index.css":"vKFU","react":"HdMw","react-dom":"X9zx","@ledgerhq/hw-app-eth":"j8k2","@ledgerhq/hw-transport-webusb":"RSlH","@ledgerhq/hw-transport-u2f":"j0o3","./src/":"B6dB"}]},{},["Focm"], null)
-//# sourceMappingURL=/mina-ledger-js.3bd7fe2d.js.map
+//# sourceMappingURL=/mina-ledger-js.605c4837.js.map

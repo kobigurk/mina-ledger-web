@@ -37,18 +37,20 @@ const getSignature = async (instance) => {
    });
   return signature;
 };
-const getDelegation = async (instance) => {
-  const signature = await instance.signTransaction({
+const getDelegation = async (instance, index, publicKey, validator, fee, nonce, memo) => {
+  const details = {
     txType: TxType.DELEGATION,
-    senderAccount: 0,
-    senderAddress: "delegator",
-    receiverAddress: "delegatee(perhaps carbonara? ;) )",
+    senderAccount: index,
+    senderAddress: publicKey,
+    receiverAddress: validator,
     amount: 0,
-    fee: 1000000000,
-    nonce: 0,
-    memo: "delegate-to-carbonara",
-    networkId: Networks.DEVNET,
-  });
+    fee: fee,
+    nonce: nonce,
+    memo: memo,
+    networkId: Networks.MAINNET,
+  };
+  console.log(details);
+  const signature = await instance.signTransaction(details);
   console.log(signature);
   return signature;
 };
@@ -76,7 +78,14 @@ class App extends Component {
   state = {
     address: null,
     addressIndex: 0,
-    error: null
+    error: null,
+    message: null,
+    tx: null,
+    fee: null,
+    nonce: null,
+    validator: 'B62qrHzjcZbYSsrcXVgGko7go1DzSEBfdQGPon5X4LEGExtNJZA4ECj',
+    memo: null,
+    balance: null,
   };
   onGetLedgerMinaAddress = async () => {
     try {
@@ -98,42 +107,201 @@ class App extends Component {
     }
   };
 
+  onGetNonceAndFee = async () => {
+    try {
+      this.setState({ error: null });
+      const response = await fetch(`https://api.minaexplorer.com/accounts/${this.state.address}`);
+      const account = await response.json();
+
+      const blockResponse = await fetch('https://api.minaexplorer.com/blocks?limit=1');
+      const block = await blockResponse.json();
+
+      this.setState({ nonce: account.account.nonce, fee: Math.min(Math.max(...block.blocks[0].transactions.userCommands.map(x => x.fee)), 1000000000), balance: account.account.balance.total });
+    } catch (error) {
+      this.setState({ error });
+    }
+  };
+
+  onDelegate = async () => {
+    try {
+      this.setState({ error: null });
+      let transport;
+      if (window.USB) {
+        transport = await TransportUSB.create();
+      } else if (window.u2f) {
+        transport = await TransportU2F.create();
+      } else {
+        this.setState({ error: new Error('Browser not supported. Use Chrome, Firefox, Brave, Opera or Edge.') });
+        return;
+      }
+      const instance = new MinaLedgerJS(transport);
+      const signature = await getDelegation(instance, this.state.addressIndex, this.state.address, this.state.validator, parseInt(this.state.fee), parseInt(this.state.nonce), this.state.memo);
+      this.setState({ tx: signature.signature });
+    } catch (error) {
+      this.setState({ error });
+    }
+  };
+
+  onBroadcast = async () => {
+    try {
+      const settings = {
+        method: 'POST',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          signature: this.state.signature,
+          stake_delegation: {
+            delegator: this.state.address,
+            new_delegate: this.state.validator,
+            nonce: this.state.nonce.toString(),
+            fee: this.state.fee.toString(),
+            memo: this.state.memo,
+            valid_until: 4294967295
+          },
+        }),
+      };
+      console.log(settings);
+      /*
+      const fetchResponse = await fetch(`https://api.minaexplorer.com/broadcast/transaction`, settings);
+      const data = await fetchResponse.json();
+      this.setState({ message: data.message });
+      */
+    } catch (error) {
+      this.setState({ error });
+    }
+  };
+
+
   handleChange(type, value) {
     if (type == 'tx') {
       this.setState({
         tx: value
       });
     } else if (type == 'addressIndex') {
+      this.refs.address.value = '';
+      this.refs.fee.value = '';
+      this.refs.nonce.value = '';
+      this.refs.tx.value = '';
       this.setState({
-        addressIndex: value
+        addressIndex: value,
+        address: null,
+        fee: null,
+        nonce: null,
+        balance: null,
+        tx: null,
+      });
+    } else if (type == 'fee') {
+      this.refs.tx.value = '';
+      this.setState({
+        fee: value,
+        tx: null,
+      });
+    } else if (type == 'nonce') {
+      this.refs.tx.value = '';
+      this.setState({
+        nonce: value,
+        tx: null,
+      });
+    } else if (type == 'address') {
+      this.refs.fee.value = '';
+      this.refs.nonce.value = '';
+      this.refs.tx.value = '';
+      this.setState({
+        address: value,
+        fee: null,
+        nonce: null,
+        balance: null,
+        tx: null,
+      });
+    } else if (type == 'validator') {
+      this.refs.tx.value = '';
+      this.setState({
+        validator: value,
+        tx: null,
+      });
+    } else if (type == 'memo') {
+      this.refs.tx.value = '';
+      this.setState({
+        memo: value,
+        tx: null,
       });
     }
   }
 
   render() {
-    const { address, error } = this.state;
+    const { address, error, message, balance } = this.state;
     return (
-      <div>
-        <p>
-          <input type="text" value={this.state.addressIndex} onChange={(e) =>this.handleChange('addressIndex', e.target.value)} />
-          <button onClick={this.onGetLedgerMinaAddress}>
-            Get Ledger Mina Address
-          </button>
-        </p>
-        {/*
-        <p>
-          <input type="text" value={this.state.tx} onChange={(e) =>this.handleChange('tx', e.target.value)} />
-          <button onClick={this.onLedgerMinaSendTx}>
-            Send Raw Transaction
-          </button>
-        </p>
-        */}
+      <div class="row">
+        <h1>Mina Ledger Delegator Tool</h1>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Step 1: Get your address</h5>
+            <label for="addressIndexInput">Address Index</label>
+            <input id="addressIndexInput" class="form-control" type="text" ref="addressIndex" value={this.state.addressIndex} onChange={(e) =>this.handleChange('addressIndex', e.target.value)} />
+            <button class="btn btn-primary" onClick={this.onGetLedgerMinaAddress}>
+              Get Ledger Mina Address
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Step 2: Get nonce and fee</h5>
+            <p>
+              This gets the nonce and fee from Mina Explorer. The fee is calculated as min(1, max(fee of txs in last block)).
+            </p>
+            <label for="addressInput">Address</label>
+            <input id="addressInput" class="form-control" type="text" ref="address" value={this.state.address} onChange={(e) =>this.handleChange('address', e.target.value)} />
+            <button class="btn btn-primary" onClick={this.onGetNonceAndFee}>
+              Get nonce and fee from Mina Explorer
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Step 3: Generate delegation transaction</h5>
+            {balance ? (
+              <div class="alert alert-primary" role="alert">
+                Balance: {balance.toString()}
+              </div>) : null}
+            <label for="feeInput">Fee (in nanomina)</label>
+            <input id="feeInput" class="form-control" type="text" ref="fee" value={this.state.fee} onChange={(e) =>this.handleChange('fee', e.target.value)} />
+            <label for="nonceInput">Nonce</label>
+            <input id="nonceInput" class="form-control" type="text" ref="nonce" value={this.state.nonce} onChange={(e) =>this.handleChange('nonce', e.target.value)} />
+            <label for="validatorInput">Validator Public Key (Default - ZKValidator)</label>
+            <input id="validatorInput" class="form-control" type="text" ref="validator" value={this.state.validator} onChange={(e) =>this.handleChange('validator', e.target.value)} />
+            <label for="memoInput">Memo (recommended - discord username)</label>
+            <input id="memoInput" class="form-control" type="text" ref="memo" value={this.state.memo} onChange={(e) =>this.handleChange('memo', e.target.value)} />
+            <button class="btn btn-primary" onClick={this.onDelegate}>
+              Generate Delegation Transaction
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Step 4: Broadcast transaction</h5>
+            <label for="txInput">Transaction</label>
+            <input id="txInput" class="form-control" type="text" ref="tx" value={this.state.tx} onChange={(e) =>this.handleChange('tx', e.target.value)} />
+            <button  class="btn btn-primary"onClick={this.onBroadcast}>
+              Broadcast Raw Transaction
+            </button>
+          </div>
+        </div>
         <p>
           {error ? (
-            <code className="error">{error.toString()}</code>
-          ) : (
-            <code className="address">{address}</code>
-          )}
+            <div class="alert alert-danger" role="alert">
+              {error.toString()}
+            </div>
+          ) : null}
+        </p>
+        <p>
+          {message ? (
+              <div class="alert alert-primary" role="alert">
+                {message.toString()}
+              </div>
+           ) : null
+          }
         </p>
       </div>
     );
