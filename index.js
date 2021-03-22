@@ -164,11 +164,9 @@ class App extends Component {
         }),
       };
       console.log(settings);
-      /*
       const fetchResponse = await fetch(`https://api.minaexplorer.com/broadcast/transaction`, settings);
       const data = await fetchResponse.json();
       this.setState({ message: data.message });
-      */
     } catch (error) {
       this.setState({ error });
     }
