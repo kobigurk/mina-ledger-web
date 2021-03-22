@@ -255,6 +255,9 @@ class App extends Component {
     return (
       <div class="row">
         <h1>Mina Ledger Delegator Tool</h1>
+        <div class="alert alert-primary" role="alert">
+          This program has not been thoroughly tested nor audited. Use with care!
+        </div>
         <div class="card">
           <div class="card-body">
             <h5 class="card-title">Step 1: Choose network</h5>
