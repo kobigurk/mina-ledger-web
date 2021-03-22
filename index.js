@@ -184,7 +184,7 @@ class App extends Component {
         throw new Error('Unknown network');
       }
       console.log(network);
-      this.setState({ tx: signature.signature, network });
+      this.setState({ network });
     } catch (error) {
       this.setState({ error });
     }
