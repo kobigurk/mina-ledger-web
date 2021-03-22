@@ -14,7 +14,7 @@
     "url": "https://github.com/nerdvibe/mina-ledger-js/issues"
   },
   "homepage": "https://github.com/nerdvibe/mina-ledger-js",
-  "main": "./dist/index.js",
+  "main": "./docs/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nerdvibe/mina-ledger-js.git"
@@ -26,7 +26,7 @@
   },
   "scripts": {
     "start": "ts-node-dev src/index.ts",
-    "build": "tsc --outDir dist/",
+    "build": "tsc --outDir docs/",
     "test": "echo \"No test specified for now\"",
     "start-web": "cross-env NODE_ENV=development parcel index.html --https",
     "build-web": "cross-env NODE_ENV=production parcel build index.html --no-minify --public-url /"
